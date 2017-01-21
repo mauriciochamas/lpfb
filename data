@@ -1,0 +1,49 @@
+library(pacman)
+p_load(rvest,stringr,tidyr,sqldf)
+###Apertura 2016-2017
+url <- "http://www.espn.com.ar/futbol/posiciones/_/tipodetemporada/1/liga/bol.1"
+###Apertura 2015-2016
+url <- "http://www.espn.com.ar/futbol/posiciones/_/season/2015/tipodetemporada/1/liga/bol.1"
+Tor <- "Apertura 2015-2016"
+
+torneo <- c("Apertura 2016-2017","Clausura 2015-2016","Apertura 2015-2016","Clausura 2014-2015",
+                   "Apertura 2014-2015","Clausura 2013-2014","Apertura 2013-2014","Clausura 2012-2013",
+                   "Apertura 2012-2013","Clausura 2011-2012","Apertura 2011-2012","Clausura 2010-2011",
+                   "Apertura 2010-2011","Clausura 2009","Apertura 2009","Clausura 2008",
+                   "Apertura 2008","Clausura 2007","Apertura 2007","Clausura 2006",
+                   "Apertura 2006","Clausura 2005","Apertura 2005")
+
+
+
+webpage <- read_html(url)
+sb_table <- html_nodes(webpage,"table")
+sb <- html_table(sb_table)[[1]]
+names(sb) <- c("Nombre","PJ","G","E","P","GF","GC","DIF","PTS")
+sb$Tor <- Tor
+sb <- sqldf("SELECT *,CASE
+            WHEN Nombre LIKE '%The Strongest%' THEN 'The Strongest'
+            WHEN Nombre LIKE '%Bolívar%' THEN 'Bolívar'
+            WHEN Nombre LIKE '%Oriente Petrolero%' THEN 'Oriente Petrolero'
+            WHEN Nombre LIKE '%Real Potosí%' THEN 'Real Potosí'
+            WHEN Nombre LIKE '%Blooming%' THEN 'Blooming'
+            WHEN Nombre LIKE '%Wilstermann%' THEN 'Wilstermann'
+            WHEN Nombre LIKE '%Nacional Potosí%' THEN 'Nacional Potosí'
+            WHEN Nombre LIKE '%Sport Boys%' THEN 'Sport Boys'
+            WHEN Nombre LIKE '%Universitario de Sucre%' THEN 'Universitario de Sucre'
+            WHEN Nombre LIKE '%San José%' THEN 'San José'
+            WHEN Nombre LIKE '%Club Petrolero de Yacuiba%' THEN 'Club Petrolero de Yacuiba'
+            WHEN Nombre LIKE '%Guabirá%' THEN 'Guabirá'
+            WHEN Nombre LIKE '%Ciclon%' THEN 'Ciclón de Tarija'
+            WHEN Nombre LIKE '%Pando%' THEN 'Universitario de Pando'
+            WHEN Nombre LIKE '%Ciclon%' THEN 'Ciclón de Tarija'
+            WHEN Nombre LIKE '%Aurora%' THEN 'Aurora'            
+            WHEN Nombre LIKE '%La Paz%' THEN 'La Paz FC'
+            WHEN Nombre LIKE '%Destroyers%' THEN 'Destroyers'
+            WHEN Nombre LIKE '%Unión Central%' THEN 'Unión Central'
+            WHEN Nombre LIKE '%Iberoamericana%' THEN 'Iberoamericana'
+            ELSE '!!!!!!!!!!!!' END AS Equipo     
+            FROM sb") 
+sb$Nombre <- NULL
+sb$Pos <- c(1:12)
+sb <- sb[,c(9,11,1,2,3,4,5,6,7,8,10)]
+lpfb <- rbind(lpfb,sb)
