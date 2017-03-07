@@ -1,0 +1,28 @@
+library(XML)
+> url <- 'http://en.wikipedia.org/wiki/World_population'
+> tbls <- readHTMLTable(url)
+As it turns out, that page contains 17 tables:
+> length(tbls)
+[1] 17
+In this example we care only about the third table (which lists the largest populations
+by country), so we specify which=3:
+> tbl <- readHTMLTable(url, which=3)
+In that table, columns 2 and 3 contain the country name and population, respectively:
+> tbl[,c(2,3)]
+Country / Territory Population
+1 Â People's Republic of China[44] 1,338,460,000
+2 Â India 1,182,800,000
+3 Â United States 309,659,000
+4 Â Indonesia 231,369,500
+5 Â Brazil 193,152,000
+6 Â Pakistan 169,928,500
+7 Â Bangladesh 162,221,000
+8 Â Nigeria 154,729,000
+9 Â Russia 141,927,297
+10 Â Japan 127,530,000
+11 Â Mexico 107,550,697
+12 Â Philippines 92,226,600
+13 Â Vietnam 85,789,573
+14 Â Germany 81,882,342
+15 Â Ethiopia 79,221,000
+16 Â Egypt 78,459,000
