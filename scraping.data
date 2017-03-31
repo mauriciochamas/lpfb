@@ -1,0 +1,91 @@
+#scraping data
+library(rvest)
+library(dplyr)
+url <- "http://www.imdb.com/search/title?count=100&release_date=2016,2016&title_type=feature"
+webpage <- read_html(url)
+# Rank: The rank of the film from 1 to 100 on the list of 100 most popular feature films released in 2016.
+# Title: The title of the feature film.
+# Description: The description of the feature film.
+# Runtime: The duration of the feature film.
+# Genre: The genre of the feature film,
+# Rating: The IMDb rating of the feature film.
+# Metascore: The metascore on IMDb website for the feature film.
+# Votes: Votes cast in favor of the feature film.
+# Gross_Earning_in_Mil: The gross earnings of the feature film in millions.
+# Director: The main director of the feature film. Note, in case of multiple directors, I’ll take only the first.
+# Actor: The main actor of the feature film. Note, in case of multiple actors, I’ll take only the first.
+===
+#Using CSS selectors to scrap the rankings section
+rank.data.html <- html_nodes(webpage, ".text-primary")
+#Converting the ranking data to text
+rank.data <- html_text(rank.data.html)
+#Rank
+rank.data <- html_nodes(webpage, ".text-primary") %>% html_text() %>% as.numeric()
+#Title
+title.data <- html_nodes(webpage, ".lister-item-header a") %>% html_text()
+head(title_data)
+#Description
+description.data <- html_nodes(webpage, ".ratings-bar+ .text-muted")%>% html_text()
+head(description.data)
+description.data <- gsub("\n", "",description.data)
+#Runtime
+runtime.data <- html_nodes(webpage, ".text-muted .runtime") %>% html_text()
+runtime.data <- gsub("min", "", runtime.data) %>% as.numeric()
+head(runtime.data)
+#Genre
+genre.data <- html_nodes(webpage, ".genre") %>% html_text()
+genre.data <- gsub("\n", "", genre.data)
+genre.data <- gsub(" ", "", genre.data)
+#taking only the first genre of each movie
+genre.data <- gsub(",.*", "", genre.data) %>% as.factor()
+head(genre.data)
+#IMBD
+imbd.data <- html_nodes(webpage,".ratings-imdb-rating strong") %>% html_text() %>% as.numeric() 
+head(imbd.data)
+#votes
+votes.data <- html_nodes(webpage, ".sort-num_votes-visible span:nth-child(2)") %>%
+  html_text() 
+votes.data <- gsub(",", "", votes.data) %>% as.numeric()
+#directors
+directors.data <- html_nodes(webpage, ".text-muted+ p a:nth-child(1)") %>% 
+  html_text() %>% as.factor()
+head(directors.data)
+#actors
+actors.data <- html_nodes(webpage, ".lister-item-content .ghost+ a") %>%
+  html_text() %>% as.factor()
+head(actors.data)
+#metascore
+metascore.data <- html_nodes(webpage, ".metascore") %>% html_text()
+metascore.data <- gsub(" ", "", metascore.data)
+for(i in c(34, 46, 48, 70, 85)){
+  a <- metascore.data[1:(i-1)]
+  b <- metascore.data[i:length(metascore.data)]
+  metascore.data <- append(a, "NA")
+  metascore.data <- append(metascore.data, b)
+}
+metascore.data <- append(metascore.data, NA) %>% as.numeric()
+summary(metascore.data)
+#gross
+gross.data <- html_nodes(webpage, ".ghost~ .text-muted+ span") %>% html_text()
+gross.data <- gsub("M", "", gross.data) %>% substring( 2, 6)
+for(i in c(28, 34, 35, 46, 48, 56, 61, 68, 70, 74, 76, 78, 84, 85, 93)){
+  a <- gross.data[1:(i-1)]
+  b <- gross.data[i:length(gross.data)]
+  gross.data <- append(a, NA)
+  gross.data <- append(gross.data,b)
+}
+gross.data <- append(gross.data, NA) %>% as.numeric()
+summary(gross.data)
+#COMBINING
+movies <- data.frame(rank.data, title.data, description.data, runtime.data, 
+                     genre.data, imbd.data, metascore.data, votes.data,
+                     gross.data, directors.data, actors.data)
+colnames(movies) <- gsub(".data", "", colnames(movies))
+str(movies)
+#EDA
+library(ggplot2)
+names(movies)
+ggplot(movies, aes(runtime, fill = genre)) + geom_histogram(binwidth = 2)
+qplot(data = movies, runtime, fill = genre, bins = 30)
+ggplot(movies, aes(runtime, imbd)) + geom_point(aes(size = votes, col = genre))
+ggplot(movies, aes(runtime, gross)) + geom_point(aes(size = imbd, col = genre))
